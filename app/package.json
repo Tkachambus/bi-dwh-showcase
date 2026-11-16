@@ -1,0 +1,28 @@
+{
+  "name": "pulse-attendance",
+  "type": "module",
+  "version": "0.1.0",
+  "scripts": {
+    "dev": "astro dev --host 0.0.0.0 --port 4321",
+    "build": "astro build",
+    "preview": "astro preview",
+    "check": "astro check",
+    "snapshot": "node scripts/snapshot.mjs",
+    "shots": "node scripts/shots.mjs",
+    "build:static": "cross-env STATIC_SNAPSHOT=1 astro build"
+  },
+  "dependencies": {
+    "@astrojs/node": "^10.0.6",
+    "@astrojs/svelte": "^8.0.5",
+    "astro": "^6.1.9",
+    "pg": "^8.20.0",
+    "svelte": "^5.55.5"
+  },
+  "devDependencies": {
+    "@astrojs/check": "^0.9.9",
+    "@types/node": "^26.6.6",
+    "@types/pg": "^8.23.1",
+    "cross-env": "^10.1.0",
+    "typescript": "^5.8.3"
+  }
+}

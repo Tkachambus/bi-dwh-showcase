@@ -1,0 +1,66 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: pulse-att-db
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-pulse}
+      POSTGRES_USER: ${POSTGRES_USER:-pulse}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-pulse}
+      TZ: Europe/Moscow
+    ports:
+      - "${DB_PORT:-55432}:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./sql:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-pulse} -d ${POSTGRES_DB:-pulse}"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+
+  seed:
+    build: ./etl
+    container_name: pulse-att-seed
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-pulse}:${POSTGRES_PASSWORD:-pulse}@db:5432/${POSTGRES_DB:-pulse}
+      SEED: ${SEED:-42}
+      TODAY: ${TODAY:-}
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: "no"
+
+  app:
+    build: ./app
+    container_name: pulse-att-app
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-pulse}:${POSTGRES_PASSWORD:-pulse}@db:5432/${POSTGRES_DB:-pulse}
+      TZ: Europe/Moscow
+      NODE_ENV: development
+    ports:
+      - "${APP_PORT:-4321}:4321"
+    depends_on:
+      seed:
+        condition: service_completed_successfully
+    command: ["sh", "-c", "node scripts/snapshot.mjs && npm run dev"]
+    volumes:
+      - ./app/src:/app/src
+      - ./app/public:/app/public
+    restart: unless-stopped
+
+  test:
+    build: ./etl
+    container_name: pulse-att-test
+    working_dir: /repo
+    volumes:
+      - ./:/repo
+    entrypoint: ["pytest", "-q", "tests"]
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-pulse}:${POSTGRES_PASSWORD:-pulse}@db:5432/${POSTGRES_DB:-pulse}
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  pgdata:

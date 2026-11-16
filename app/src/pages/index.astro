@@ -1,0 +1,20 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Dashboard from '../components/Dashboard.svelte';
+import { getOverview } from '../lib/queries';
+
+const { snapshot, state, data } = getOverview(Astro.url.searchParams);
+const base = import.meta.env.BASE_URL;
+const root = base.endsWith('/') ? base : base + '/';
+const snapshotUrl = root + 'data/snapshot.json';
+---
+
+<BaseLayout title="Обзор">
+  <Dashboard
+    initial={data}
+    initialState={state}
+    snapshotUrl={snapshotUrl}
+    snapshotToday={snapshot.today}
+    client:load
+  />
+</BaseLayout>
